@@ -4,7 +4,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h> // for opendir, readdir
-#include <unistd.h> // 
+#include <unistd.h>
 #include <stdlib.h> // for exit()
 #include "fifoq.h"  // API for fifoq_t
 
@@ -13,34 +13,39 @@
 #define NAMESIZE 256
 #define MAXTHREADS 8
 
-/****************** Shared variables ***************************/
 char *searchstring;  // string to look for in files
 fifoq_t jobq;        // FIFO queue of file names
 int total;   // total # of occurrences found so far
 int nfiles;  // # of files processed
-/* Also needed:
- *   mutex for controlling access to the ints above.
- ***************************************************************/
- pthread_mutex_t totLock;
- pthread_mutex_t nFilLock;
+
+ pthread_mutex_t totLock; //Lock for the total variable.
+ pthread_mutex_t nFilLock; //Lock for the nfiles variable.
 
 /*
- * Function to count the occurences of the string in the file,
- * incrementing the total count each time.
+ * Function to count the occurences of the string in the file.
+ * Takes a file pointer and a string to search for as arguments.
+ * Returns the total number of occurences found.
  */
 int countOcc(FILE* fileP, char* strToFind){
 	int strSize = 0;
 	int retVal = 0;
+
+	//Calculates the size of the string.
 	while(strToFind[strSize] != '\0'){
 		strSize++;
 	}
+
+	//Creates a buffer variable of size maxline to store the next line of input from the file.
 	char* lineS = (char*)malloc(MAXLINE);
 	lineS = fgets(lineS, MAXLINE, fileP);
+
+	//Executes until the end of the file is reached. The following counts how many times 
+	//the string is found in a given line, adds one to the return value each time, and gets a new line.
 	while(!feof(fileP)){
-		int index = 0;
-		int strIndex = 0;
-		int run = 0;
-		int flipped = 0;
+		int index = 0; //Index for current line of the file
+		int strIndex = 0; //Index for the string to search for.
+		int run = 0;  //Tracks whenever you are on a "run", meaning at least the first character of the string to search for has been found and no inccorect characters have.
+		int flipped = 0; //Tracks if the state of the run variable changed from one iteration to the next. This is to handle overlapping and adjacent finds of the string.
 		while(lineS[index] != '\n'){
 			if(lineS[index] == strToFind[strIndex]){
 				strIndex++;
@@ -77,8 +82,8 @@ int countOcc(FILE* fileP, char* strToFind){
  * Function that will be executed by worker threads.
  * do "forever":  Get a filename from the queue.
  * If it's a directory, walk through it and add a copy of
- * each name to the queue. Else (file) read each line
- * and scan for occurrences of searchstring.
+ * each name to the queue. If a text file read each line
+ * and scan for occurrences of searchstring. Otherwise it can be ignored.
  */
 void *worker(void *ignored) {
   char *name;
@@ -95,6 +100,8 @@ void *worker(void *ignored) {
 	int updateCount = 0;
 	name = (char*)fq_get(&jobq);
 	int errno = stat(name, &finfo);
+
+	//If the file is a textfile, open it and call updateCount.
 	if(S_ISREG(finfo.st_mode)){
 		f = fopen(name, "r");
 		if(f == NULL){
@@ -113,6 +120,8 @@ void *worker(void *ignored) {
         	pthread_mutex_unlock(&totLock);
         	pthread_mutex_unlock(&nFilLock);
 	}else{
+
+		//If the file is a directory add all subfiles to the queue.
 		if(S_ISDIR(finfo.st_mode)){
 			DIR* d = opendir(name);
 			if(d == NULL){
@@ -179,6 +188,7 @@ int main(int argc, char *argv[]) {
   	exit(9);
   }
 
+  //Add all extra arguments to the queue as items to be searched.
   for (i=3; i<argc; i++) {
 	  fq_add(&jobq, argv[i]);
   }

@@ -1,3 +1,4 @@
+//The header file for a thread-safe FIFO Queue implementation
 #ifndef FIFOQ_H
 #define FIFOQ_H
 
@@ -9,13 +10,13 @@ typedef struct fq_item {
 } fqi_t;
 
 typedef struct fifoq {
-  fqi_t *fq_first;
-  fqi_t *fq_last;
-  pthread_mutex_t fq_lock;
-  pthread_cond_t fq_mtcond;
-  pthread_cond_t fq_fincond;
-  int fq_nwaiting;
-  int fq_limit;
+  fqi_t *fq_first; //points to first item in queue.
+  fqi_t *fq_last; //points to last item in queue.
+  pthread_mutex_t fq_lock; //Lock for the queue.
+  pthread_cond_t fq_mtcond; //Conditional variable for blocking a thread while the queue is empty.
+  pthread_cond_t fq_fincond; //Conditional variables for when all threads operating on the queue are blocked and the queue.
+  int fq_nwaiting; //Number of blocked threads.
+  int fq_limit; //Limit of blocked threads before the queue can finish.
 } fifoq_t;
 
 void fq_init(fifoq_t *q, int limit);  // initialize and configure
