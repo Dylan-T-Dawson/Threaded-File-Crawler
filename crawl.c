@@ -1,4 +1,4 @@
-/* CS 270 final Project Fall 2022 */
+
 #include <stdio.h>
 #include <pthread.h>
 #include <sys/types.h>
@@ -8,7 +8,7 @@
 #include <stdlib.h> // for exit()
 #include "fifoq.h"  // API for fifoq_t
 
-/* XXXXX THESE CONSTANTS SHOULD NOT BE CHANGED */
+//Define constants
 #define MAXLINE 256
 #define NAMESIZE 256
 #define MAXTHREADS 8
@@ -76,9 +76,9 @@ int countOcc(FILE* fileP, char* strToFind){
 /* 
  * Function that will be executed by worker threads.
  * do "forever":  Get a filename from the queue.
- *   If it's a directory, walk through it and add a copy of
- *   each name to the queue. Else (file) read each line
- *   and scan for occurrences of searchstring.
+ * If it's a directory, walk through it and add a copy of
+ * each name to the queue. Else (file) read each line
+ * and scan for occurrences of searchstring.
  */
 void *worker(void *ignored) {
   char *name;

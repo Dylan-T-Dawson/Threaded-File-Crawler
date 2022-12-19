@@ -21,5 +21,5 @@ typedef struct fifoq {
 void fq_init(fifoq_t *q, int limit);  // initialize and configure
 void fq_add(fifoq_t *q, void *item); // put something in the queue
 void *fq_get(fifoq_t *q);            // get the first thing
-void fq_finish(fifoq_t *q);  // how many are blocked on empty queue?
+void fq_finish(fifoq_t *q);  // Blocks until the queue is empty and all threads are waiting.
 #endif
